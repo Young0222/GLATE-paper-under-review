@@ -36,8 +36,8 @@ CiteSeer:
 PubMed:
   seed: 23344
   learning_rate: 0.001
-  num_hidden: 16
-  num_proj_hidden: 16
+  num_hidden: 256
+  num_proj_hidden: 256
   activation: 'rrelu'
   base_model: 'GCNConv'
   num_layers: 2

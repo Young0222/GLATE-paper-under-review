@@ -70,34 +70,23 @@ class Model(torch.nn.Module):
         z2 = F.normalize(z2)
         return torch.mm(z1, z2.t())
 
-    def uniform_loss(self, z: torch.Tensor, t: int = 2):
-        return torch.pdist(z, p=2).pow(2).mul(-t).exp().mean().log()
-
-    def indicator(self, z: torch.Tensor, t: int = 2):
-        threshold = 0.5
-        num = z.shape[0]
-        p = torch.ones(num)
-        index = p.multinomial(num_samples=100, replacement=True)
-        z_sample = z[index]
-        z_global = (z_sample < threshold) * z_sample
-        z_local = (z_sample >= threshold) * z_sample
-        return torch.pdist(z_global, p=2).pow(2).mul(-t).exp().mean().log() + torch.pdist(z_local, p=2).pow(2).mul(-t).exp().mean().log()
-
     def decay(self, x_start: float, decay: float = 0.999):
          return x_start * decay
 
-    def momentum(self, x_start: float, z: torch.Tensor, step: float = 0.001, discount: float = 0.7): 
-        if x_start <= self.tau2:
-            return x_start
-        x = x_start
-        grad = -self.indicator(z).item()
-        self.pre_grad = self.pre_grad * discount + 1 / grad
-        x -= self.pre_grad * step
+    def uniform_loss(self, z: torch.Tensor, t: int = 2):
+        threshold = 0.5
+        num = z.shape[0]
+        p = torch.ones(num)
+        index = p.multinomial(num_samples=10, replacement=True)
+        z_sample = z[index]
+        z_global = (z_sample < threshold) * z_sample
+        z_local = (z_sample >= threshold) * z_sample
+        global_separation = - torch.pdist(z_global, p=2).pow(2).mul(-t).exp().mean().log()  # global separation value of sampled embeddings
+        local_separation = - torch.pdist(z_local, p=2).pow(2).mul(-t).exp().mean().log()  # local separation value of sampled embeddings
+        
+        return global_separation + local_separation
 
-        # x -= grad * step
-        return x
-
-    def momentum_batch(self, x_start: float, z: torch.Tensor, step: float = 0.001, discount: float = 0.7): 
+    def momentum(self, x_start: float, z: torch.Tensor, step: float = 1e-3, discount: float = 0.7): 
         if x_start <= self.tau2:
             return x_start
         x = x_start
@@ -105,7 +94,16 @@ class Model(torch.nn.Module):
         self.pre_grad = self.pre_grad * discount + 1 / grad
         x -= self.pre_grad * step
 
-        # x -= grad * step
+        return x
+
+    def momentum_batch(self, x_start: float, z: torch.Tensor, step: float = 1e-3, discount: float = 0.7): 
+        if x_start <= self.tau2:
+            return x_start
+        x = x_start
+        grad = -self.uniform_loss(z).item()
+        self.pre_grad = self.pre_grad * discount + 1 / grad
+        x -= self.pre_grad * step
+
         return x
 
     def torch_cov(self, input_vec: torch.Tensor):    
@@ -115,22 +113,18 @@ class Model(torch.nn.Module):
 
     def semi_loss(self, z1: torch.Tensor, z2: torch.Tensor, epoch: int):
         f = lambda x: torch.exp(x / self.tau1)
-        # self.tau1 = self.decay(self.tau1)
-        self.tau1 = self.momentum(self.tau1, z1)
-    
-        # print("self.tau1: ", self.tau1)
-        # hard_negative1 = torch.mul(self.sim(z1, z1), self.sim(z1, z1)>0.8)
-        # hard_negative2 = torch.mul(self.sim(z1, z2), self.sim(z1, z2)>0.8)
-        # refl_sim = f(hard_negative1)
-        # between_sim = f(hard_negative2)
+
+        if epoch % 10 == 0:
+            self.tau1 = self.momentum(self.tau1, z1)
+
         refl_sim = f(self.sim(z1, z1))
         between_sim = f(self.sim(z1, z2))
 
-        return -torch.log(between_sim.diag() / (refl_sim.sum(1) - refl_sim.diag() + between_sim.sum(1)))
+        return - torch.log(between_sim.diag() / (refl_sim.sum(1) - refl_sim.diag() + between_sim.sum(1)))
+
 
     def batched_semi_loss(self, z1: torch.Tensor, z2: torch.Tensor, epoch: int,
                           batch_size: int):
-        # Space complexity: O(BN) (semi_loss: O(N^2))
         device = z1.device
         num_nodes = z1.size(0)
         num_batches = (num_nodes - 1) // batch_size + 1
@@ -143,10 +137,6 @@ class Model(torch.nn.Module):
 
         for i in range(num_batches):
             mask = indices[i * batch_size:(i + 1) * batch_size]
-            # hard_negative1 = torch.mul(self.sim(z1[mask], z1), self.sim(z1[mask], z1)>0.6)
-            # hard_negative2 = torch.mul(self.sim(z1[mask], z2), self.sim(z1[mask], z2)>0.6)
-            # refl_sim = f(hard_negative1)
-            # between_sim = f(hard_negative2)
             refl_sim = f(self.sim(z1[mask], z1))  # [B, N]
             between_sim = f(self.sim(z1[mask], z2))  # [B, N]
             losses.append(-torch.log(

@@ -4,7 +4,7 @@ import functools
 from sklearn import svm
 from abc import ABC, abstractmethod
 from sklearn.metrics import f1_score, accuracy_score, log_loss
-# from sklearn.linear_model import LogisticRegression   # used for cora and citeseer (grace+glate)
+# from sklearn.linear_model import LogisticRegression   # used for cora and citeseer (grace)
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import normalize, OneHotEncoder
