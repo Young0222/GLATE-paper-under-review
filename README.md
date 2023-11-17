@@ -1,6 +1,6 @@
 # GLATE
 
-## This is our PyTorch implementation code for our paper: GLATE: Graph Contrastive Learning with Dynamic Temperature Estimation
+## This is our PyTorch implementation code for our paper: Incorporating Dynamic Temperature Estimation into Contrastive Learning on Graphs
 
 
 ## Environment Requirements
@@ -14,23 +14,23 @@ The code has been tested under Python 3.7.13. The required packages are as follo
 ## Example : Cora dataset
 
 ```python
-python train_grace_glate.py --dataset Cora
+python train_glate.py --dataset Cora
 ```
 
 ## Example : CiteSeer dataset
 
 ```python
-python train_grace_glate.py --dataset CiteSeer
+python train_glate.py --dataset CiteSeer
 ```
 
 ## Example : PubMed dataset
 
 ```python
-python train_grace_glate.py --dataset PubMed
+python train_glate.py --dataset PubMed
 ```
 
 ## Example : PPI dataset
 
 ```python
-python train_glate_ppi.py
+python GLATE-PPI.py
 ```
