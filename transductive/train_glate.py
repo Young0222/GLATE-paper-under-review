@@ -44,14 +44,6 @@ def train(model: Model, x, edge_index, epoch, dataset):
     optimizer.step()
 
     return loss.item(), tau
-
-
-def test_LR(encoder_model: Model, x, edge_index, y, seed):
-    encoder_model.eval()
-    z = encoder_model(x, edge_index)
-    split = get_split(num_samples=z.size()[0], train_ratio=0.1, test_ratio=0.8)
-    result = LREvaluator()(z, y, split, seed)
-    return result
     
 
 def visualization(encoder_model: Model, x, edge_index, y, seed, index):
@@ -158,7 +150,3 @@ if __name__ == '__main__':
             tau_list.append(tau)
             prev = now
         # visualization(model, data.x, data.edge_index, data.y, seed, epoch)
-
-        print("=== Final ===")
-        res = test_LR(model, data.x, data.edge_index, data.y, seed)
-
