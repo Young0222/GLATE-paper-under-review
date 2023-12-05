@@ -31,4 +31,4 @@ The running result is:
 
 ...
 
-(E) | evaluate: micro_f1=0.8504+-0.0029, macro_f1=0.0000+-0.0000, ACC=0.8504+-0.0029
+Total training time: 3.2937s, downstream task accuracy result: 0.8504+-0.0029
