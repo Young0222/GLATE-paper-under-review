@@ -1,6 +1,6 @@
 # GLATE
 
-## This is our PyTorch implementation code for our paper: Incorporating Dynamic Temperature Estimation into Contrastive Learning on Graphs
+## This is the PyTorch implementation code for our paper: Incorporating Dynamic Temperature Estimation into Contrastive Learning on Graphs
 
 
 ## Environment Requirements
