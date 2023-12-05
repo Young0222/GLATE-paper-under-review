@@ -16,21 +16,3 @@ The code has been tested under Python 3.7.13. The required packages are as follo
 ```python
 python train_glate.py --dataset Cora
 ```
-
-## Example : CiteSeer dataset
-
-```python
-python train_glate.py --dataset CiteSeer
-```
-
-## Example : PubMed dataset
-
-```python
-python train_glate.py --dataset PubMed
-```
-
-## Example : PPI dataset
-
-```python
-python GLATE-PPI.py
-```
