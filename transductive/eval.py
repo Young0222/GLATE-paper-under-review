@@ -4,7 +4,6 @@ import functools
 from sklearn import svm
 from abc import ABC, abstractmethod
 from sklearn.metrics import f1_score, accuracy_score, log_loss
-# from sklearn.linear_model import LogisticRegression   # used for cora and citeseer (grace)
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import normalize, OneHotEncoder
@@ -13,8 +12,14 @@ from tqdm import tqdm
 from torch import nn
 from torch.optim import Adam
 import random
+import os
 
-
+seed = 307401
+print("downstream seed: ", seed)
+os.environ['PYTHONHASHSEED'] = str(seed)
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
 
 def repeat(n_times):
     def decorator(f):
@@ -110,12 +115,8 @@ class LREvaluator(BaseEvaluator):
         self.weight_decay = weight_decay
         self.test_interval = test_interval
 
-    @repeat(3)
+    @repeat(10)
     def evaluate(self, x: torch.FloatTensor, y: torch.LongTensor, split: dict, seed: int):
-        # random.seed(seed)
-        # np.random.seed(seed)
-        # torch.manual_seed(seed)
-        
         device = x.device
         x = x.detach().to(device)
         input_dim = x.size()[1]

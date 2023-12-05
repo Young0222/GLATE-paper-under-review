@@ -17,12 +17,20 @@ import scipy.sparse as sp
 from torch_geometric.datasets import Planetoid, CitationFull, Coauthor, Amazon, WikiCS
 from torch_geometric.utils import dropout_adj
 from torch_geometric.nn import GCNConv
+import os
 
 from model import Encoder, Model, drop_feature
 from eval import label_classification, LREvaluator
 
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
+
+seed = 139287
+print("seed: ", seed)
+os.environ['PYTHONHASHSEED'] = str(seed)
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
 
 
 def train(model: Model, x, edge_index, epoch, dataset):
@@ -67,6 +75,12 @@ def get_split(num_samples: int, train_ratio: float = 0.1, test_ratio: float = 0.
         'test': indices[test_size + train_size:]
     }
 
+def test_LR(encoder_model: Model, x, edge_index, y, seed):
+    encoder_model.eval()
+    z = encoder_model(x, edge_index)
+    split = get_split(num_samples=z.size()[0], train_ratio=0.1, test_ratio=0.8)
+    result = LREvaluator()(z, y, split, seed)
+    return result
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -82,12 +96,6 @@ if __name__ == '__main__':
     config = yaml.load(open(args.config), Loader=SafeLoader)[args.dataset]
 
     for _ in range(1, 2):
-        seed = random.randint(1,999999)
-        print("seed: ", seed)
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-
         learning_rate = config['learning_rate']
         num_hidden = config['num_hidden']
         num_proj_hidden = config['num_proj_hidden']
@@ -150,3 +158,12 @@ if __name__ == '__main__':
             tau_list.append(tau)
             prev = now
         # visualization(model, data.x, data.edge_index, data.y, seed, epoch)
+
+        acc_list = []
+        print("=== Final ===")
+        res_list = []
+        for i in range(1):
+            print("current time: ", i)
+            res = test_LR(model, data.x, data.edge_index, data.y, seed)
+            res_list.append(res['ACC']['mean'])
+        print("mean ACC: ", np.mean(res_list))
